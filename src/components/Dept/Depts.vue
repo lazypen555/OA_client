@@ -1,8 +1,8 @@
 <template>
     <div>
         <Card style="width:100%">
-            <Row :gutter="16">
-                <Col span="5">
+            <Row :gutter="10">
+                <Col span="4">
                 <span>编号/名称</span>
                 <Input v-model="name" style="width: 100px"></Input>
                 </Col>
@@ -39,7 +39,7 @@
 </template>
 <script>
     export default {
-        name: "users",
+        name: "depts",
         data() {
             return {
                 name: '',
@@ -152,8 +152,8 @@
                         v.parentNo=cNo;
                         v.parentName=cName;
                     }
-                    v.isProduct = isProduct ? '是':'否';
-                    v.isOut = isOut ? '是':'否';
+                    v.isProduct = isProduct=="0" ? '是':'否';
+                    v.isOut = isOut=="0"  ? '是':'否';
                     return v;
                 });
             }

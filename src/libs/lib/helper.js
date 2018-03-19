@@ -53,6 +53,32 @@ class Helper {
     }
 
     buildDept(deptLiST){
+        let createMenu = (cNo, vNode) => {
+            let childrens = _.filter(deptLiST, {parentId: cNo});
+            childrens= _.orderBy(childrens,['cNo']);
+
+            if (childrens && childrens.length) {
+                _.each(childrens, (v, i) => {
+                    let child_vNode = {label: v.cName,value: v.cNo, children: []};
+                    vNode.children.push(child_vNode);
+                    createMenu(v.cNo, child_vNode);
+                });
+            }else{
+                delete vNode.children;
+            }
+            return vNode;
+        };
+        let dept=[];
+        if (deptLiST && deptLiST.length) {
+            let oneList = _.filter(deptLiST, {parentId: '0'});
+            oneList= _.orderBy(oneList,['cNo']);
+
+            _.each(oneList, (v, i) => {
+                let vNode = {value: v.cNo, label: v.cName, children: []};
+                dept.push(createMenu(v.cNo, vNode))
+            });
+        }
+        return dept;
 
     }
 

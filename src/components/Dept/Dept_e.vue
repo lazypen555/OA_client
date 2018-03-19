@@ -1,118 +1,143 @@
 <template>
     <div>
-        <Form ref="UserForm" :model="form" :rules="ruleValidate" :label-width="80">
+        <Form ref="DeptForm" :model="form" :rules="ruleValidate" :label-width="100">
             <Row>
-                <Col span="8">
-                <form label="是否单位">
-                    <Select v-model="form.isUnit" >
+                <Col span="5">
+                <FormItem label="是否单位">
+                    <Select v-model="form.isUnit" :disabled="lockUint">
                         <Option value="0">是</Option>
                         <Option value="1">否</Option>
                     </Select>
-                </form>
-                </Col>>
-            </Row>
-            <Row>
-                <Col span="6">
-                <form label="上级部门" prop="parentId">
-                    <Select v-model="form.parentId" >
-                        <Option v-for="">启用</Option>
-                        <Option value="1">停用</Option>
-                    </Select>
-                </form>
+                </FormItem>
                 </Col>
-                <Col span="6" offset="2">
-                <form label="编号" prop="cNo">
-                    <Input v-model="form.cPassword" placeholder="输入编号..."  size="small"></Input>
-                </form>
-                </Col>
-                <Col span="6" offset="2">
-                <form label="名称" prop="cName">
-                    <Input v-model="form.cName" placeholder="输入名称..."  size="small"></Input>
-                </form>
+                <Col span="5" v-show="showDept" offset="1">
+                <FormItem label="上级部门" prop="parentId">
+                    <Cascader :data="buildDept" v-model="form.parentId" placeholder="请选择部门"
+                              change-on-select @on-change="changeDept"></Cascader>
+                </FormItem>
                 </Col>
             </Row>
             <Row>
-                <Col span="6">
-                <form label="是否生产单位">
-                    <Select v-model="form.isProduct" >
+                <Col span="5">
+                <FormItem label="编号" prop="cNo">
+                    <span v-show="showDept">{{form.parentNo}}</span>
+                    <InputNumber :max="99" :min="1" v-show="showDept" v-model="form.cNo" placeholder="输入编号...,且前缀默认添加" :readonly="lockUint">
+                    </InputNumber>
+                    <InputNumber :max="99" :min="1" v-show="!showDept" v-model="form.cNo" placeholder="输入编号..." :readonly="lockUint">
+                    </InputNumber>
+                </FormItem>
+                </Col>
+                <Col span="5" offset="1">
+                <FormItem label="名称" prop="cName">
+                    <Input v-model="form.cName" placeholder="输入名称..."></Input>
+                </FormItem>
+                </Col>
+            </Row>
+            <Row>
+                <Col span="5">
+                <FormItem label="是否生产单位">
+                    <Select v-model="form.isProduct">
                         <Option value="0">是</Option>
                         <Option value="1">否</Option>
                     </Select>
-                </form>
+                </FormItem>
                 </Col>
-                <Col span="6" offset="2">
-                <form label="是否场所外" >
-                    <Select v-model="form.isOut" >
+                <Col span="5" offset="1">
+                <FormItem label="是否场所外">
+                    <Select v-model="form.isOut">
                         <Option value="0">是</Option>
                         <Option value="1">否</Option>
                     </Select>
-                </form>
+                </FormItem>
                 </Col>
-                <Col span="6" offset="2">
-                <form label="状态">
-                    <Select v-model="form.status" >
+                <Col span="5" offset="1">
+                <FormItem label="状态">
+                    <Select v-model="form.status">
                         <Option value="0">启用</Option>
                         <Option value="1">停用</Option>
                     </Select>
-                </form>
+                </FormItem>
                 </Col>
             </Row>
             <Row>
-                <Col span="8">
-                <form label="remark">
+                <Col span="17">
+                <FormItem label="备注">
                     <Input v-model="form.remark" type="textarea" :autosize="{minRows: 2,maxRows: 5}"
                            placeholder=""></Input>
-                </form>
+                </FormItem>
                 </Col>
             </Row>
-            <form>
+            <FormItem>
                 <Button type="primary" :disabled="btnDis" @click="handleSubmit">提交</Button>
                 <Button type="ghost" :disabled="btnDis" style="margin-left: 8px" @click="handleReset">取消</Button>
-            </form>
+            </FormItem>
         </Form>
     </div>
 </template>
 <script>
     export default {
-        name: "user_e",
+        name: "dept_e",
         data() {
+            let oThis = this;
+            const validateParent = function (rule, value, callback) {
+                if (value == '' && oThis.form.isUnit === '1') {
+                    callback(new Error('请您选择单位'));
+                }
+                callback();
+            };
             return {
                 curId: '-1',
                 btnDis: true,
-                cNoDis: false,
                 form: {
-                    cNo: '',
+                    cNo: 2,
                     cName: '',
                     status: '0',
                     isProduct: '0',
                     isOut: '0',
                     isUnit: '0',
-                    parentId: '',
-                    remark:''
+                    parentId: [],
+                    parentNo: '',
+                    remark: ''
                 },
                 title: '编辑',
                 deptList: [],
                 ruleValidate: {
-                    cNo: [
-                        {required: true, message: '请您输入数字工号', trigger: 'blur'},
-                    ],
                     cName: [{required: true, message: '请您输入姓名', trigger: 'blur'}],
+                    parentId: [{validator: validateParent, trigger: 'change'}],
                 }
             }
         },
+        created: function () {
+            this.curId = this.$route.params.id || '-1';
+        },
+        computed: {
+            lockUint: function () {
+                return this.curId !== '-1';
+            },
+            showDept: function () {
+                return this.form.isUnit === '1';
+            },
+            buildDept: function () {
+                return this.$helper.buildDept(this.deptList);
+            }
+        },
         methods: {
+            changeDept(value, selectedData) {
+                this.form.parentNo = this.$_.last(selectedData).value;
+                debugger;
+            },
             handleSubmit() {
                 this.btnDis = true;
-                this.$refs["UserForm"].validate(async (valid) => {
+                this.$refs["DeptForm"].validate(async (valid) => {
                     if (valid) {
                         const msg = this.$Message.loading({
                             content: 'Loading...',
                             duration: 0
                         });
                         if (this.curId === '-1') {
-                            this.saveUser();
+                            this.saveDept();
                         } else {
-                            this.updateUser();
+                            this.updateDept();
                         }
                         msg();
                     }
@@ -120,30 +145,29 @@
                 })
             },
             handleReset() {
-                this.$router.push('/index/users');
+                this.$router.push('/index/depts');
             },
-            async getUser(id) {
+            async getInfo(id) {
                 const msg = this.$Message.loading({
                     content: 'Loading...',
                     duration: 0
                 });
-                let result = await this.$http.get(`/v1/user/${id}/edit`);
+                let result = await this.$http.get(`/v1/dept/${id}/edit`);
                 if (result && result.isSuc) {
                     let info = result.data.info;
 
                     this.$_.each(this.form, (v, k) => {
-                        if (k === "RePassword") {
-                            this.form[k] = info.cPassword;
-                        } else if (k === "cDept") {
-                            let cDept = info[k];
-                            let tempDept=[];
-                            if(cDept.length>3) {
-                                tempDept.push(cDept.substring(0, 3));
-                                tempDept.push(cDept);
-                            }else{
-                                tempDept.push(cDept);
+                        if (k === "parentId") {
+                            let parentId = info[k];
+                            let tempDept = [];
+                            if (parentId && parentId.length > 3) {
+                                tempDept.push(parentId.substring(0, 1));
+                                tempDept.push(parentId.substring(0, 3));
+                                tempDept.push(parentId);
+                            } else {
+                                tempDept.push(parentId);
                             }
-                            this.form[k]= tempDept;
+                            this.form[k] = tempDept;
                         } else if (info[k]) {
                             this.form[k] = info[k].toString();
                         }
@@ -152,76 +176,53 @@
                     msg();
                 }
             },
-            async saveUser() {
+            async saveDept() {
                 let form = this.$_.assign({}, this.form);
-                form.cDept = this.$_.last(form.cDept)
+                form.parentId = this.$_.last(form.parentId);
+                form.cNo = (form.parentNo || '') + form.cNo;
                 let result;
-                result = await this.$http.post(`/v1/user`, form);
+                result = await this.$http.post(`/v1/dept`, form);
                 if (result && result.isSuc) {
                     this.$Message.success(result ? result.data.msg : '网络异常');
-                    this.$router.push('/index/users');
+                    this.$router.push('/index/depts');
                 } else {
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
 
             },
-            async updateUser() {
+            async updateDept() {
                 let form = this.$_.assign({}, this.form);
-                form.cDept = this.$_.last(form.cDept);
+                form.parentId = this.$_.last(form.parentId);
                 let result;
-                result = await this.$http.put(`/v1/user/${this.curId}`, form);
+                result = await this.$http.put(`/v1/dept/${this.curId}`, form);
                 if (result && result.isSuc) {
                     this.$Message.success(result ? result.data.msg : '网络异常');
-                    this.$router.push('/index/users');
+                    this.$router.push('/index/depts');
                 } else {
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
             },
             async getDept() {
                 let result;
-                result = await this.$http.get(`/v1/dept`);
+                result = await this.$http.get(`/v1/dept`, {isPage: false});
                 if (result && result.isSuc) {
-                    let {parentList = [], childList = []} = result.data;
-                    let tree = [];
-                    if (parentList.length) {
-                        tree = this.$_.map(parentList, (v, i) => {
-                            let {cName, cNo} = v;
-                            let children = this.$_.filter(childList, (cV, ci) => {
-                                return cV.cNo.includes(cNo, 0);
-                            });
-                            children = this.$_.map(children, (cV, ci) => {
-                                return {value: cV.cNo, label: cV.cName}
-                            });
-                            return {value: cNo, label: cName, children}
-                        });
+                    this.deptList = result.data.deptList;
+                    //获取最后的单位
+                    if(this.curId === '-1'){
+                        let parents = this.$_.filter(this.deptList,{parentId:'0'});
+                        debugger
+                        this.form.cNo = this.$_.maxBy(parents,'cNo').cNo;
                     }
-                    this.tree = tree;
-                } else {
-                    this.$Message.error(result ? result.data.msg : '网络异常');
-                }
-            },
-            async getUnit() {
-                let result;
-                result = await this.$http.get(`/v1/unit`);
-                if (result && result.isSuc) {
-                    let {list = []} = result.data;
-                    list = this.$_.map(list, (v, i) => {
-                        return {value: v.cNo, label: v.cName};
-                    });
-                    this.unitList = list;
                 } else {
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
             },
         },
         mounted: async function () {
-            this.curId = this.$route.params.id || '-1';
-            await Promise.all([this.getDept(), this.getUnit()]);
+            await this.getDept();
             if (this.curId !== '-1') {
-                this.cNoDis=true;
-                this.getUser(this.curId);
+                this.getInfo(this.curId);
             }
-
             this.btnDis = false
         },
     }

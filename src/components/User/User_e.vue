@@ -4,31 +4,31 @@
             <Row>
                 <Col span="8">
                 <FormItem label="工号" prop="cUser_Id">
-                    <Input v-model="formItem.cUser_Id" placeholder="输入工号..." :disabled="cNoDis"  size="smaller" ></Input>
+                    <Input v-model="formItem.cUser_Id" placeholder="输入工号..." :disabled="cNoDis"></Input>
                 </FormItem>
                 </Col>
                 <Col span="8" offset="2">
                 <FormItem label="姓名" prop="cUser_Name">
-                    <Input v-model="formItem.cUser_Name" placeholder="输入姓名..." size="smaller"></Input>
+                    <Input v-model="formItem.cUser_Name" placeholder="输入姓名..."></Input>
                 </FormItem>
                 </Col>
             </Row>
             <Row>
                 <Col span="8">
                 <FormItem label="密码" prop="cPassword">
-                    <Input v-model="formItem.cPassword" placeholder="输入密码..." type="password" size="smaller"></Input>
+                    <Input v-model="formItem.cPassword" placeholder="输入密码..." type="password"></Input>
                 </FormItem>
                 </Col>
                 <Col span="8" offset="2">
                 <FormItem label="确认密码" prop="RePassword">
-                    <Input v-model="formItem.RePassword" placeholder="确认密码..." type="password" size="smaller"></Input>
+                    <Input v-model="formItem.RePassword" placeholder="确认密码..." type="password"></Input>
                 </FormItem>
                 </Col>
             </Row>
             <Row>
                 <Col span="8">
                 <FormItem label="手机号">
-                    <Input v-model="formItem.cPhone" placeholder="输入手机号..." size="smaller"></Input>
+                    <Input v-model="formItem.cPhone" placeholder="输入手机号..."></Input>
                 </FormItem>
                 </Col>
                 <Col span="8" offset="2">
@@ -42,13 +42,13 @@
             <Row>
                 <Col span="8">
                 <FormItem label="部门" prop="cDept">
-                    <Cascader :data="tree" v-model="formItem.cDept" placeholder="请选择部门"
+                    <Cascader :data="buildDept" v-model="formItem.cDept" placeholder="请选择部门"
                               change-on-select></Cascader>
                 </FormItem>
                 </Col>
                 <Col span="8" offset="2">
                 <FormItem label="状态">
-                    <Select v-model="formItem.nState" >
+                    <Select v-model="formItem.nState">
                         <Option value="0">启用</Option>
                         <Option value="1">停用</Option>
                     </Select>
@@ -124,7 +124,7 @@
                     nState: "0"
                 },
                 title: '编辑',
-                tree: [],
+                deptList: [],
                 unitList: [],
                 ruleValidate: {
                     cUser_Id: [
@@ -150,6 +150,11 @@
                         {required: true, type: 'array', message: '请您选择部门', trigger: 'change'},
                     ],
                 }
+            }
+        },
+        computed: {
+            buildDept: function () {
+                return this.$helper.buildDept(this.deptList);
             }
         },
         methods: {
@@ -188,14 +193,15 @@
                             this.formItem[k] = info.cPassword;
                         } else if (k === "cDept") {
                             let cDept = info[k];
-                            let tempDept=[];
-                            if(cDept.length>3) {
+                            let tempDept = [];
+                            if (cDept.length > 3) {
+                                tempDept.push(cDept.substring(0, 1));
                                 tempDept.push(cDept.substring(0, 3));
                                 tempDept.push(cDept);
-                            }else{
+                            } else {
                                 tempDept.push(cDept);
                             }
-                            this.formItem[k]= tempDept;
+                            this.formItem[k] = tempDept;
                         } else if (info[k]) {
                             this.formItem[k] = info[k].toString();
                         }
@@ -206,7 +212,7 @@
             },
             async saveUser() {
                 let form = this.$_.assign({}, this.formItem);
-                form.cDept = this.$_.last(form.cDept)
+                form.cDept = this.$_.last(form.cDept);
                 let result;
                 result = await this.$http.post(`/v1/user`, form);
                 if (result && result.isSuc) {
@@ -231,23 +237,9 @@
             },
             async getDept() {
                 let result;
-                result = await this.$http.get(`/v1/dept`);
+                result = await this.$http.get(`/v1/dept`, {isPage: false});
                 if (result && result.isSuc) {
-                    let {parentList = [], childList = []} = result.data;
-                    let tree = [];
-                    if (parentList.length) {
-                        tree = this.$_.map(parentList, (v, i) => {
-                            let {cName, cNo} = v;
-                            let children = this.$_.filter(childList, (cV, ci) => {
-                                return cV.cNo.includes(cNo, 0);
-                            });
-                            children = this.$_.map(children, (cV, ci) => {
-                                return {value: cV.cNo, label: cV.cName}
-                            });
-                            return {value: cNo, label: cName, children}
-                        });
-                    }
-                    this.tree = tree;
+                    this.deptList = result.data.deptList;
                 } else {
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
@@ -270,7 +262,7 @@
             this.curId = this.$route.params.id || '-1';
             await Promise.all([this.getDept(), this.getUnit()]);
             if (this.curId !== '-1') {
-                this.cNoDis=true;
+                this.cNoDis = true;
                 this.getUser(this.curId);
             }
 
