@@ -39,17 +39,21 @@ class Helper {
             }
             return vNode;
         };
-        let tree=[];
+        let menu=[];
         if (menuList && menuList.length) {
             let oneList = _.filter(menuList, {parentId: 0});
             oneList= _.orderBy(oneList,['menuNo']);
 
             _.each(oneList, (v, i) => {
                 let vNode = {title: v.menuName, value: v.menuId, children: [], expand: true,icon:v.icon};
-                tree.push(createMenu(v.menuId, vNode))
+                menu.push(createMenu(v.menuId, vNode))
             });
         }
-        return tree;
+        return menu;
+    }
+
+    buildDept(deptLiST){
+
     }
 
 }

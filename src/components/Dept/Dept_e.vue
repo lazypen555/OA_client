@@ -1,79 +1,74 @@
 <template>
     <div>
-        <Form ref="UserForm" :model="formItem" :rules="ruleValidate" :label-width="80">
+        <Form ref="UserForm" :model="form" :rules="ruleValidate" :label-width="80">
             <Row>
                 <Col span="8">
-                <FormItem label="工号" prop="cUser_Id">
-                    <Input v-model="formItem.cUser_Id" placeholder="输入工号..." :disabled="cNoDis"  size="smaller" ></Input>
-                </FormItem>
-                </Col>
-                <Col span="8" offset="2">
-                <FormItem label="姓名" prop="cUser_Name">
-                    <Input v-model="formItem.cUser_Name" placeholder="输入姓名..." size="smaller"></Input>
-                </FormItem>
-                </Col>
-            </Row>
-            <Row>
-                <Col span="8">
-                <FormItem label="密码" prop="cPassword">
-                    <Input v-model="formItem.cPassword" placeholder="输入密码..." type="password" size="smaller"></Input>
-                </FormItem>
-                </Col>
-                <Col span="8" offset="2">
-                <FormItem label="确认密码" prop="RePassword">
-                    <Input v-model="formItem.RePassword" placeholder="确认密码..." type="password" size="smaller"></Input>
-                </FormItem>
-                </Col>
-            </Row>
-            <Row>
-                <Col span="8">
-                <FormItem label="手机号">
-                    <Input v-model="formItem.cPhone" placeholder="输入手机号..." size="smaller"></Input>
-                </FormItem>
-                </Col>
-                <Col span="8" offset="2">
-                <FormItem label="所属单位" prop="cUnit">
-                    <Select v-model="formItem.cUnit" filterable>
-                        <Option v-for="item in unitList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                <form label="是否单位">
+                    <Select v-model="form.isUnit" >
+                        <Option value="0">是</Option>
+                        <Option value="1">否</Option>
                     </Select>
-                </FormItem>
+                </form>
+                </Col>>
+            </Row>
+            <Row>
+                <Col span="6">
+                <form label="上级部门" prop="parentId">
+                    <Select v-model="form.parentId" >
+                        <Option v-for="">启用</Option>
+                        <Option value="1">停用</Option>
+                    </Select>
+                </form>
+                </Col>
+                <Col span="6" offset="2">
+                <form label="编号" prop="cNo">
+                    <Input v-model="form.cPassword" placeholder="输入编号..."  size="small"></Input>
+                </form>
+                </Col>
+                <Col span="6" offset="2">
+                <form label="名称" prop="cName">
+                    <Input v-model="form.cName" placeholder="输入名称..."  size="small"></Input>
+                </form>
                 </Col>
             </Row>
             <Row>
-                <Col span="8">
-                <FormItem label="部门" prop="cDept">
-                    <Cascader :data="tree" v-model="formItem.cDept" placeholder="请选择部门"
-                              change-on-select></Cascader>
-                </FormItem>
+                <Col span="6">
+                <form label="是否生产单位">
+                    <Select v-model="form.isProduct" >
+                        <Option value="0">是</Option>
+                        <Option value="1">否</Option>
+                    </Select>
+                </form>
                 </Col>
-                <Col span="8" offset="2">
-                <FormItem label="状态">
-                    <Select v-model="formItem.nState" >
+                <Col span="6" offset="2">
+                <form label="是否场所外" >
+                    <Select v-model="form.isOut" >
+                        <Option value="0">是</Option>
+                        <Option value="1">否</Option>
+                    </Select>
+                </form>
+                </Col>
+                <Col span="6" offset="2">
+                <form label="状态">
+                    <Select v-model="form.status" >
                         <Option value="0">启用</Option>
                         <Option value="1">停用</Option>
                     </Select>
-                </FormItem>
+                </form>
                 </Col>
             </Row>
             <Row>
-                <Col span="18">
-                <FormItem label="签名">
-                    <Upload
-                            multiple
-                            type="drag"
-                            action="//jsonplaceholder.typicode.com/posts/">
-                        <div style="padding: 20px 0">
-                            <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
-                            <p>点击或拖入文件</p>
-                        </div>
-                    </Upload>
-                </FormItem>
+                <Col span="8">
+                <form label="remark">
+                    <Input v-model="form.remark" type="textarea" :autosize="{minRows: 2,maxRows: 5}"
+                           placeholder=""></Input>
+                </form>
                 </Col>
             </Row>
-            <FormItem>
+            <form>
                 <Button type="primary" :disabled="btnDis" @click="handleSubmit">提交</Button>
                 <Button type="ghost" :disabled="btnDis" style="margin-left: 8px" @click="handleReset">取消</Button>
-            </FormItem>
+            </form>
         </Form>
     </div>
 </template>
@@ -81,74 +76,27 @@
     export default {
         name: "user_e",
         data() {
-            let oThis = this;
-            const validatePass = function (rule, value, callback) {
-                if (value.length < 3) {
-                    callback(new Error('请您输入密码长度大于3'));
-                } else if (value.length >= 10) {
-                    callback(new Error('请您输入密码长度小于10'));
-                } else {
-                    if (oThis.formItem.RePassword !== '') {
-                        // 对第二个密码框单独验证
-                        oThis.$refs.UserForm.validateField('RePassword');
-                    }
-                    callback();
-                }
-            };
-            const validatePassCheck = function (rule, value, callback) {
-                if (value == '') {
-                    callback(new Error('请您输入重复密码'));
-                } else if (value != oThis.formItem.cPassword) {
-                    callback(new Error('您第二次输入的密码不匹配'));
-                }
-                callback();
-            }
-            const validateUnit = function (rule, value, callback) {
-                if (value == '') {
-                    callback(new Error('请您选择单位'));
-                }
-                callback();
-            };
             return {
                 curId: '-1',
                 btnDis: true,
                 cNoDis: false,
-                formItem: {
-                    cUser_Id: '',
-                    cUser_Name: '',
-                    cPassword: '',
-                    RePassword: '',
-                    cPhone: '',
-                    cUnit: '',
-                    cDept: [],
-                    nState: "0"
+                form: {
+                    cNo: '',
+                    cName: '',
+                    status: '0',
+                    isProduct: '0',
+                    isOut: '0',
+                    isUnit: '0',
+                    parentId: '',
+                    remark:''
                 },
                 title: '编辑',
-                tree: [],
-                unitList: [],
+                deptList: [],
                 ruleValidate: {
-                    cUser_Id: [
+                    cNo: [
                         {required: true, message: '请您输入数字工号', trigger: 'blur'},
                     ],
-                    cUser_Name: [
-                        {required: true, message: '请您输入姓名', trigger: 'blur'},
-                    ],
-                    cPassword: [
-                        {required: true, message: '请您输入密码', trigger: 'blur'},
-                        {validator: validatePass, trigger: 'blur'},
-
-                    ],
-                    RePassword: [
-                        {required: true, message: '请您重复密码', trigger: 'blur'},
-                        {validator: validatePassCheck, trigger: 'blur'},
-                    ],
-                    cUnit: [
-                        //{required: true, message: '请您选择单位', trigger: 'change'},
-                        {validator: validateUnit, trigger: 'change'},
-                    ],
-                    cDept: [
-                        {required: true, type: 'array', message: '请您选择部门', trigger: 'change'},
-                    ],
+                    cName: [{required: true, message: '请您输入姓名', trigger: 'blur'}],
                 }
             }
         },
@@ -183,9 +131,9 @@
                 if (result && result.isSuc) {
                     let info = result.data.info;
 
-                    this.$_.each(this.formItem, (v, k) => {
+                    this.$_.each(this.form, (v, k) => {
                         if (k === "RePassword") {
-                            this.formItem[k] = info.cPassword;
+                            this.form[k] = info.cPassword;
                         } else if (k === "cDept") {
                             let cDept = info[k];
                             let tempDept=[];
@@ -195,9 +143,9 @@
                             }else{
                                 tempDept.push(cDept);
                             }
-                            this.formItem[k]= tempDept;
+                            this.form[k]= tempDept;
                         } else if (info[k]) {
-                            this.formItem[k] = info[k].toString();
+                            this.form[k] = info[k].toString();
                         }
                     });
                     this.btnDis = false;
@@ -205,7 +153,7 @@
                 }
             },
             async saveUser() {
-                let form = this.$_.assign({}, this.formItem);
+                let form = this.$_.assign({}, this.form);
                 form.cDept = this.$_.last(form.cDept)
                 let result;
                 result = await this.$http.post(`/v1/user`, form);
@@ -218,7 +166,7 @@
 
             },
             async updateUser() {
-                let form = this.$_.assign({}, this.formItem);
+                let form = this.$_.assign({}, this.form);
                 form.cDept = this.$_.last(form.cDept);
                 let result;
                 result = await this.$http.put(`/v1/user/${this.curId}`, form);

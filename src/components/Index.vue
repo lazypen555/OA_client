@@ -73,7 +73,6 @@
             createMenu(){
                 this.menus =this.$helper.buildMenu(this.$store.getters.getMenus);
                 console.log(this.menus);
-                debugger;
             }
         },
         components:{

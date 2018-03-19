@@ -3,17 +3,12 @@
         <Card style="width:100%">
             <Row :gutter="16">
                 <Col span="5">
-                <span>工号/姓名</span>
+                <span>编号/名称</span>
                 <Input v-model="name" style="width: 100px"></Input>
-                </Col>
-                <Col span="7">
-                <span style="float:left;vertical-align: middle;">部门</span>
-                <Cascader :data="tree" v-model="cDept" style="width: 200px;float:left" placeholder="请选择部门"
-                          change-on-select></Cascader>
                 </Col>
                 <Col span="3">
                 <span>状态</span>
-                <Select v-model="nState" style="width: 70px">
+                <Select v-model="status" style="width: 70px">
                     <Option value="-1">全部</Option>
                     <Option value="0">启用</Option>
                     <Option value="1">停用</Option>
@@ -30,7 +25,7 @@
             </Row>
         </Card>
         <br/>
-        <Table height="400" ref="selection" stripe border :loading="tableLoading" :columns="columns" :data="data"
+        <Table height="400" ref="selection" stripe border :loading="tableLoading" :columns="columns" :data="tableData"
                @on-sort-change="order"></Table>
 
         <div style="margin: 10px;overflow: hidden">
@@ -49,49 +44,46 @@
             return {
                 name: '',
                 cDept: ['-1'],
-                nState: '-1',
+                status: '-1',
                 searchDis: true,
                 columns: [
                     {
                         type: 'selection',
                         align: 'center',
-                        key: 'cUser_Id',
+                        key: 'cNo',
                         width: 60
                     },
                     {
                         title: '部门编号',
-                        key: 'cUser_Id'
+                        key: 'cNo'
                     },
                     {
                         title: '部门名称',
-                        key: 'cUser_Name'
+                        key: 'cName'
                     },
                     {
                         title: '上级部门编号',
-                        key: 'cPhone'
+                        key: 'parentNo'
                     },
                     {
                         title: '上级部门名称',
-                        key: 'cDept',
-                        sortable: true
+                        key: 'parentName'
                     },
                     {
                         title: '是否生产单位',
-                        key: 'cDeptName'
+                        key: 'isProduct'
                     },
                     {
-                        title: '是否场外所' +
-                        '' +
-                        '',
-                        key: 'cDeptName'
+                        title: '是否场外所',
+                        key: 'isOut'
                     },
                     {
                         title: '状态',
-                        key: 'nState',
+                        key: 'status',
                         render: (h, params) => {
                             const row = params.row;
-                            const color = row.nState === 0 ? ' green' : 'red';
-                            const text = row.nState === 0 ? '启用' : '停用';
+                            const color = row.status === 0 ? ' green' : 'red';
+                            const text = row.status === 0 ? '启用' : '停用';
 
                             return h('Tag', {
                                 props: {
@@ -119,7 +111,7 @@
                                     },
                                     on: {
                                         click: () => {
-                                            this.showEdit(params.row.cUser_Id);
+                                            this.showEdit(params.row.cNo);
                                         }
                                     }
                                 }, '修改'),
@@ -133,7 +125,7 @@
                                     },
                                     on: {
                                         click: () => {
-                                            this.delUser(params.row.cUser_Id);
+                                            this.delUser(params.row.cNo);
                                         }
                                     }
                                 }, '删除')
@@ -149,6 +141,23 @@
                 tableLoading: false
             }
         },
+        computed:{
+            tableData:function () {
+                return this.$_.map(this.data,(v,i)=>{
+                    let {parentId,isProduct,isOut}=v;
+
+                    let {cNo='',cName='' }= this.$_.find(this.data,{cNo:parentId}) || {};
+                    debugger
+                    if(cNo){
+                        v.parentNo=cNo;
+                        v.parentName=cName;
+                    }
+                    v.isProduct = isProduct ? '是':'否';
+                    v.isOut = isOut ? '是':'否';
+                    return v;
+                });
+            }
+        },
         methods: {
             indexChange(index) {
                 this.index = index;
@@ -160,7 +169,7 @@
                 this.getInfo(this.index, this.page);
             },
             showEdit(id) {
-                this.$router.push({path: `/index/users/${id ? id : -1 }`});
+                this.$router.push({path: `/index/depts/${id ? id : -1 }`});
             },
             order(column) {
                 this.getInfo(this.index, this.page, [[column.key, column.order.toUpperCase()]]);
@@ -171,7 +180,7 @@
                 this.tableLoading = isLock;
             },
             search() {
-                this.getInfo();
+                this.getDept();
             },
             exportData() {
                 this.$refs.selection.exportCsv({
@@ -181,14 +190,17 @@
                 });
 
             },
-            async getInfo(index = 1, page = 20, order) {
+            async getDept(index = 1, page = 20, order) {
                 this.disabledBtn(true);
                 let {name, cDept, nState} = this;
                 let where = this.$helper.getSendWhere({name, cDept, nState});
-                let result = await this.$http.get(`/v1/user`, {where, index, page, order});
+                let result = await this.$http.get(`/v1/dept`, {where, index, page, order});
                 if (result && result.isSuc) {
-                    this.data = result.data.list;
+
+                    this.data = result.data.deptList;
                     this.total = result.data.total;
+                    debugger
+
                 }
                 this.disabledBtn(false);
             },
@@ -196,7 +208,7 @@
                 this.$Modal.confirm({
                     content: '您是否要删除该行?',
                     onOk: async () => {
-                        let result = await  this.$http.delete(`/v1/user/${id}`);
+                        let result = await  this.$http.delete(`/v1/dept/${id}`);
                         debugger;
                         if (result && result.isSuc) {
                             this.$Message.success('删除成功');
@@ -207,35 +219,11 @@
                     }
                 })
 
-            },
-            async getDept() {
-                let result;
-                result = await this.$http.get(`/v1/dept`);
-                if (result && result.isSuc) {
-                    let {parentList = [], childList = []} = result.data;
-                    let tree = [];
-                    if (parentList.length) {
-                        tree = this.$_.map(parentList, (v, i) => {
-                            let {cName, cNo} = v;
-                            let children = this.$_.filter(childList, (cV, ci) => {
-                                return cV.cNo.includes(cNo, 0);
-                            });
-                            children = this.$_.map(children, (cV, ci) => {
-                                return {value: cV.cNo, label: cV.cName}
-                            });
-                            return {value: cNo, label: cName, children}
-                        });
-                    }
-                    tree.unshift({value: '-1', label: '全部'});
-                    this.tree = tree;
-                } else {
-                    this.$Message.error(result ? result.data.msg : '网络异常');
-                }
-            },
+            }
         },
         mounted: async function () {
-            await this.getDept();
-            await this.getInfo(this.index, this.page);
+            //await this.getDept();
+            await this.getDept(this.index, this.page);
         }
     }
 </script>
