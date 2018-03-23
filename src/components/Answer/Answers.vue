@@ -62,15 +62,15 @@
                         key: 'cName'
                     },
                     {
-                        title: '离监类型',
+                        title: '离开类型',
                         key: 'cCurInUnit'
                     },
                     {
-                        title: '离监日期',
+                        title: '离开日期',
                         key: 'dOutDate'
                     },
                     {
-                        title: '是否回放',
+                        title: '是否回访',
                         key: 'cbCnt',
                         render: (h, params) => {
                             const row = params.row;
@@ -86,7 +86,7 @@
                         }
                     },
                     {
-                        title: '回放',
+                        title: '回访',
                         key: 'action',
                         width: 150,
                         align: 'center',

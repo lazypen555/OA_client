@@ -8,7 +8,7 @@
                 </Col>
                 <Col span="7">
                 <span style="float:left;vertical-align: middle;">部门</span>
-                <Cascader :data="tree" v-model="cDept" style="width: 200px;float:left" placeholder="请选择部门"
+                <Cascader :data="tree" v-model="cUnit" style="width: 200px;float:left" placeholder="请选择部门"
                           change-on-select></Cascader>
                 </Col>
                 <Col span="3">
@@ -48,7 +48,7 @@
         data() {
             return {
                 name: '',
-                cDept: ['-1'],
+                cUnit: ['-1'],
                 nState: '-1',
                 searchDis: true,
                 columns: [
@@ -72,12 +72,12 @@
                     },
                     {
                         title: '部门编号',
-                        key: 'cDept',
+                        key: 'cUnit',
                         sortable: true
                     },
                     {
                         title: '部门名称',
-                        key: 'cDeptName'
+                        key: 'cUnitName'
                     },
                     {
                         title: '状态',
@@ -177,8 +177,8 @@
             },
             async getInfo(index = 1, page = 20, order) {
                 this.disabledBtn(true);
-                let {name, cDept, nState} = this;
-                let where = this.$helper.getSendWhere({name, cDept, nState});
+                let {name, cUnit, nState} = this;
+                let where = this.$helper.getSendWhere({name, cUnit, nState});
                 let result = await this.$http.get(`/v1/user`, {where, index, page, order});
                 if (result && result.isSuc) {
                     this.data = result.data.list;
@@ -202,9 +202,9 @@
                 })
 
             },
-            async getDept() {
+            async getUnit() {
                 let result;
-                result = await this.$http.get(`/v1/dept`);
+                result = await this.$http.get(`/v1/unit`);
                 if (result && result.isSuc) {
                     let {parentList = [], childList = []} = result.data;
                     let tree = [];
@@ -228,7 +228,7 @@
             },
         },
         mounted: async function () {
-            await this.getDept();
+            await this.getUnit();
             await this.getInfo(this.index, this.page);
         }
     }

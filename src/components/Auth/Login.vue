@@ -2,25 +2,37 @@
     <div class="loginPage">
         <div class="form">
             <Row>
-                <Col :span="24">
-                <Form :model="ruleForm" ref="ruleForm" :rules="rules">
-                    <FormItem prop="username">
-                        <Input v-model="ruleForm.username" type="text" @keyup.enter.native="submitForm('ruleForm')">
-                        <Icon type="ios-person-outline" slot="prepend"></Icon>
+                <Col :span="24" class-name="loginTitle">
+                <h1>管教平台</h1>
+                </Col>
+            </Row>
+
+            <Form :model="ruleForm" ref="ruleForm" :rules="rules">
+                <Row>
+                    <Col :span="22" offset="2" class-name="loginTitle" style="font-size: large" >
+                    <FormItem prop="username" label="账号" >
+                        <Input v-model="ruleForm.username" size="large" type="text" @on-enter="submitForm('ruleForm')"  style="width:300px">
+                        <Icon type="ios-person-outline" slot="append"></Icon>
                         </Input>
                     </FormItem>
-                    <FormItem style="color: #fff;" prop="password">
-                        <Input v-model="ruleForm.password" type="password" @keyup.enter.native="submitForm('ruleForm')">
-                        <Icon type="ios-locked-outline" slot="prepend"></Icon>
+                    <FormItem style="color: #fff;" prop="password" label="密码">
+                        <Input v-model="ruleForm.password" size="large" type="password"
+                               @on-enter="submitForm('ruleForm')" style="width:300px">
+                        <Icon type="ios-locked-outline" slot="append"></Icon>
                         </Input>
                     </FormItem>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col :span="24" class-name="loginTitle">
                     <FormItem label="">
                         <Button type="primary" @click="submitForm('ruleForm')" :disabled="btnDis">登 录</Button>
                         <Button type="info" @click="clearForm('ruleForm')" :disabled="btnDis">重 置</Button>
                     </FormItem>
-                </Form>
-                </Col>
-            </Row>
+                    </Col>
+                </Row>
+            </Form>
+
         </div>
     </div>
 </template>
@@ -78,14 +90,13 @@
                 let result;
                 let {grant_type} = config.oAuth;
                 let params = this.$_.assign({}, this.ruleForm);
-                params.grant_type = 'password';
-                debugger;
+                params.grant_type = grant_type || 'password';
                 result = await this.$http.post('/v1/api/login', params);
                 if (result && result.isSuc) {
-                    debugger;
-                    this.$http.setToken(result.data);
+                    let token = result.data;
+                    token.username=params.username;
                     //注册state
-                    this.$store.commit('registerToken', result.data);
+                    await this.$store.dispatch('registerToken', token);
                     this.$router.push('/index');
                 } else {
                     //oauth2 限制
@@ -121,6 +132,13 @@
         background-color: rgba(255, 255, 255, 0.4);
         font-size: 20px;
         font-weight: bold;
+        border-radius: 15px;
+    }
+
+    .loginTitle {
+        text-align: center;
+        color: #063967;
+        top: 50px;
     }
 
     .el-button {

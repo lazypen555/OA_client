@@ -142,12 +142,10 @@
             <Card>
                 <p slot="title">离监设置</p>
                 <Row>
-                    <Col span="4">
-                    <FormItem label="所属部门" prop="cUnit">
-                        <Select v-model="formItem.cUnit" filterable size="small">
-                            <Option v-for="item in unitList" :value="item.value" :key="item.value">{{ item.label }}
-                            </Option>
-                        </Select>
+                    <Col span="6">
+                    <FormItem label="单位/部门" prop="cUnit">
+                        <Cascader :data="buildUnit" v-model="formItem.cUnit" placeholder="请选择单位/部门"
+                                  change-on-select></Cascader>
                     </FormItem>
                     </Col>
                     <Col span="1">
@@ -182,19 +180,13 @@
     export default {
         name: "prisoner_e",
         data() {
-            const validateUnit = function (rule, value, callback) {
-                if (value == '') {
-                    callback(new Error('请您选择单位'));
-                }
-                callback();
-            };
             return {
                 curId: -1,
                 btnDis: true,
                 formItem: {
                     cNo: '',
                     cName: '',
-                    cUnit: '',
+                    cUnit: [],
                     cMarry: '',
                     cSex: '',
                     dBirthDay: '',
@@ -230,7 +222,7 @@
                 unitList: [],
                 ruleValidate: {
                     cUnit: [
-                        {required: true, message: '请您选择单位', trigger: 'change'},
+                        {required: true, type: 'array', message: '请您选择单位/部门', trigger: 'change'},
                     ],
                     cType9: [
                         {required: true, message: '请您选择类型', trigger: 'change'},
@@ -239,6 +231,11 @@
                         {required: true, type: 'date', message: '请您输入时间', trigger: 'change'},
                     ],
                 }
+            }
+        },
+        computed: {
+            buildUnit: function () {
+                return this.$helper.buildUnit(this.unitList);
             }
         },
         methods: {
@@ -266,7 +263,13 @@
             async updatePrisoner() {
                 let {bIsOut, cType9, dOutDate, cUnit} = this.formItem;
                 let result;
-                result = await this.$http.put(`/v1/prisoner/${this.curId}`, {bIsOut, cType9, dOutDate, cUnit});
+                debugger;
+                result = await this.$http.put(`/v1/prisoner/${this.curId}`, {
+                    bIsOut,
+                    cType9,
+                    dOutDate,
+                    cUnit: this.$_.last(cUnit)
+                });
                 if (result && result.isSuc) {
                     this.$Message.success(result ? result.data.msg : '网络异常');
                     this.$router.push('/index/prisoners');
@@ -288,6 +291,16 @@
                     this.$_.each(this.formItem, (v, k) => {
                         if (k === 'bIsOut') {
                             this.formItem[k] = !!info[k];
+                        } else if (k === 'cUnit') {
+                            let cUnit = info[k];
+                            let tempUnit = [];
+                            if (cUnit && cUnit.length > 2) {
+                                tempUnit.push(cUnit.substring(0, 2));
+                                tempUnit.push(cUnit);
+                            } else {
+                                tempUnit.push(cUnit);
+                            }
+                            this.formItem[k] = tempUnit;
                         } else {
                             this.formItem[k] = (info[k] || '').toString();
                         }
@@ -299,38 +312,11 @@
                     msg();
                 }
             },
-            async getDept() {
-                let result;
-                result = await this.$http.get(`/v1/dept`);
-                if (result && result.isSuc) {
-                    let {parentList = [], childList = []} = result.data;
-                    let deptList = [];
-                    if (parentList.length) {
-                        deptList = this.$_.map(parentList, (v, i) => {
-                            let {cName, cNo} = v;
-                            let children = this.$_.filter(childList, (cV, ci) => {
-                                return cV.cNo.includes(cNo, 0);
-                            });
-                            children = this.$_.map(children, (cV, ci) => {
-                                return {value: cV.cNo, label: cV.cName}
-                            });
-                            return {value: cNo, label: cName, children}
-                        });
-                    }
-                    this.deptList = deptList;
-                } else {
-                    this.$Message.error(result ? result.data.msg : '网络异常');
-                }
-            },
             async getUnit() {
                 let result;
-                result = await this.$http.get(`/v1/unit`);
+                result = await this.$http.get(`/v1/unit`, {isPage: false});
                 if (result && result.isSuc) {
-                    let {list = []} = result.data;
-                    list = this.$_.map(list, (v, i) => {
-                        return {value: v.cNo, label: v.cName};
-                    });
-                    this.unitList = list;
+                    this.unitList = result.data.unitList;
                 } else {
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
@@ -338,7 +324,7 @@
         },
         mounted: async function () {
             this.curId = this.$route.params.id || '-1';
-            await Promise.all([this.getDept(), this.getUnit()]);
+            await Promise.all([this.getUnit(), this.getUnit()]);
             if (this.curId !== -1) {
                 this.getPrisoners(this.curId);
             }

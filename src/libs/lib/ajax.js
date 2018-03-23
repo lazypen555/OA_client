@@ -1,20 +1,25 @@
 import axios from 'axios';
 import qs from 'qs';
-import env from "../../config/env";
+import helper from './helper';
 import _ from 'lodash';
-
 import config from '../../config/config'
 
+const _helper= new helper();
 const ajaxUrl = config.server;
 
+let getInitAuthHead = function () {
+    let {client_id, client_secret} = config.oAuth;
+    return `Basic ${window.btoa(client_id + ':' + client_secret)}`;
+}
+
 let getAuthorization = function () {
-    let token = window.localStorage.getItem('token');
-    let token_type = window.localStorage.getItem('token_type');
-    if(token && token_type){
+
+    let token = _helper.getLocalStorage('token') || {};
+    let {accessToken, token_type} = token;
+    if (accessToken && token_type) {
         return `${token_type} ${token}`;
-    }else {
-        let {client_id, client_secret} = config.oAuth;
-        return `Basic ${window.btoa(client_id + ':' + client_secret)}`;
+    } else {
+        return getInitAuthHead();
     }
 }
 
@@ -25,11 +30,11 @@ axios.defaults.headers.common['Authorization'] = getAuthorization();
 //POST传参序列化(添加请求拦截器)
 axios.interceptors.request.use((config) => {
 //在发送请求之前做某件事
-    if(config.method === 'post'){
+    if (config.method === 'post') {
         config.data = qs.stringify(config.data);
     }
     return config;
-},(error) =>{
+}, (error) => {
     return Promise.reject(error);
 });
 
@@ -103,13 +108,14 @@ class Ajax {
         return this.handlRes(response);
     }
 
-    setToken(auth_token) {
-        let {access_token,token_type}=auth_token;
-        //注册本地缓存
-        window.localStorage.setItem('token',access_token);
-        window.localStorage.setItem('token_type',token_type);
-        axios.defaults.headers.common['Authorization'] =`${token_type} ${access_token}`;
+    setToken(token) {
+        let {access_token, token_type} = token;
+        axios.defaults.headers.common['Authorization'] = `${token_type} ${access_token}`;
 
+    }
+
+    delToken() {
+        axios.defaults.headers.common['Authorization'] = getInitAuthHead();
     }
 }
 

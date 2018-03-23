@@ -18,12 +18,11 @@
         </Card>
 
         <br/>
-        <Table height="400" ref="selection" stripe border :loading="tableLoading" :columns="columns" :data="data"
-               @on-sort-change="order"></Table>
+        <Table height="400" ref="selection" stripe border :loading="tableLoading" :columns="columns" :data="data"></Table>
 
         <div style="margin: 10px;overflow: hidden">
             <div style="float: right;">
-                <Page :total="total" show-sizer show-total @on-change="indexChange" @on-page-size-change="sizeChange"
+                <Page :total="total" show-sizer placement="top" show-total @on-change="indexChange" @on-page-size-change="sizeChange"
                       :page-size="20"></Page>
             </div>
         </div>
@@ -103,7 +102,7 @@
                                         },
                                         on: {
                                             click: () => {
-                                                this.delUser(roleId);
+                                                this.delRole(roleId);
                                             }
                                         }
                                     }, '删除')
@@ -133,7 +132,6 @@
                 this.$router.push({path: `/index/roles/${id ? id : -1 }`});
             },
             order(column) {
-                this.getInfo(this.index, this.page, [[column.key, column.order.toUpperCase()]]);
             },
             search() {
                 this.getInfo();
@@ -162,17 +160,16 @@
                 }
                 this.disabledBtn(false);
             },
-            async delUser(id) {
+            async delRole(id) {
                 this.$Modal.confirm({
                     content: '您是否要删除该行?',
                     onOk: async () => {
                         let result = await  this.$http.delete(`/v1/role/${id}`);
-                        debugger;
                         if (result && result.isSuc) {
                             this.$Message.success('删除成功');
                             this.getInfo(this.index, this.page);
                         } else {
-                            this.$Message.success('删除失败');
+                            this.$Message.error(result ? result.data.msg : '删除失败');
                         }
                     }
                 })

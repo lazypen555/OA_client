@@ -32,21 +32,14 @@
                 </FormItem>
                 </Col>
                 <Col span="8" offset="2">
-                <FormItem label="所属单位" prop="cUnit">
-                    <Select v-model="formItem.cUnit" filterable>
-                        <Option v-for="item in unitList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-                    </Select>
+                <FormItem label="单位/部门" prop="cUnit">
+                    <Cascader :data="buildUnit" v-model="formItem.cUnit" placeholder="请选择单位/部门"
+                              change-on-select></Cascader>
                 </FormItem>
                 </Col>
             </Row>
             <Row>
-                <Col span="8">
-                <FormItem label="部门" prop="cDept">
-                    <Cascader :data="buildDept" v-model="formItem.cDept" placeholder="请选择部门"
-                              change-on-select></Cascader>
-                </FormItem>
-                </Col>
-                <Col span="8" offset="2">
+                <Col span="8" >
                 <FormItem label="状态">
                     <Select v-model="formItem.nState">
                         <Option value="0">启用</Option>
@@ -119,12 +112,10 @@
                     cPassword: '',
                     RePassword: '',
                     cPhone: '',
-                    cUnit: '',
-                    cDept: [],
+                    cUnit: [],
                     nState: "0"
                 },
                 title: '编辑',
-                deptList: [],
                 unitList: [],
                 ruleValidate: {
                     cUser_Id: [
@@ -143,18 +134,14 @@
                         {validator: validatePassCheck, trigger: 'blur'},
                     ],
                     cUnit: [
-                        //{required: true, message: '请您选择单位', trigger: 'change'},
-                        {validator: validateUnit, trigger: 'change'},
-                    ],
-                    cDept: [
-                        {required: true, type: 'array', message: '请您选择部门', trigger: 'change'},
+                        {required: true, type: 'array', message: '请您选择单位/部门', trigger: 'change'},
                     ],
                 }
             }
         },
         computed: {
-            buildDept: function () {
-                return this.$helper.buildDept(this.deptList);
+            buildUnit: function () {
+                return this.$helper.buildUnit(this.unitList);
             }
         },
         methods: {
@@ -191,17 +178,16 @@
                     this.$_.each(this.formItem, (v, k) => {
                         if (k === "RePassword") {
                             this.formItem[k] = info.cPassword;
-                        } else if (k === "cDept") {
-                            let cDept = info[k];
-                            let tempDept = [];
-                            if (cDept.length > 3) {
-                                tempDept.push(cDept.substring(0, 1));
-                                tempDept.push(cDept.substring(0, 3));
-                                tempDept.push(cDept);
+                        } else if (k === "cUnit") {
+                            let cUnit = info[k];
+                            let tempUnit = [];
+                            if (cUnit && cUnit.length > 2) {
+                                tempUnit.push(cUnit.substring(0, 2));
+                                tempUnit.push(cUnit);
                             } else {
-                                tempDept.push(cDept);
+                                tempUnit.push(cUnit);
                             }
-                            this.formItem[k] = tempDept;
+                            this.formItem[k] = tempUnit;
                         } else if (info[k]) {
                             this.formItem[k] = info[k].toString();
                         }
@@ -212,7 +198,7 @@
             },
             async saveUser() {
                 let form = this.$_.assign({}, this.formItem);
-                form.cDept = this.$_.last(form.cDept);
+                form.cUnit = this.$_.last(form.cUnit);
                 let result;
                 result = await this.$http.post(`/v1/user`, form);
                 if (result && result.isSuc) {
@@ -225,7 +211,7 @@
             },
             async updateUser() {
                 let form = this.$_.assign({}, this.formItem);
-                form.cDept = this.$_.last(form.cDept);
+                form.cUnit = this.$_.last(form.cUnit);
                 let result;
                 result = await this.$http.put(`/v1/user/${this.curId}`, form);
                 if (result && result.isSuc) {
@@ -235,24 +221,11 @@
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
             },
-            async getDept() {
-                let result;
-                result = await this.$http.get(`/v1/dept`, {isPage: false});
-                if (result && result.isSuc) {
-                    this.deptList = result.data.deptList;
-                } else {
-                    this.$Message.error(result ? result.data.msg : '网络异常');
-                }
-            },
             async getUnit() {
                 let result;
-                result = await this.$http.get(`/v1/unit`);
+                result = await this.$http.get(`/v1/unit`, {isPage: false});
                 if (result && result.isSuc) {
-                    let {list = []} = result.data;
-                    list = this.$_.map(list, (v, i) => {
-                        return {value: v.cNo, label: v.cName};
-                    });
-                    this.unitList = list;
+                    this.unitList = result.data.unitList;
                 } else {
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
@@ -260,7 +233,7 @@
         },
         mounted: async function () {
             this.curId = this.$route.params.id || '-1';
-            await Promise.all([this.getDept(), this.getUnit()]);
+            await  this.getUnit();
             if (this.curId !== '-1') {
                 this.cNoDis = true;
                 this.getUser(this.curId);

@@ -1,33 +1,37 @@
 <template>
     <div>
-        <Form ref="DeptForm" :model="form" :rules="ruleValidate" :label-width="100">
+        <Form ref="UnitForm" :model="form" :rules="ruleValidate" :label-width="100">
             <Row>
-                <Col span="5">
+                <Col span="8">
                 <FormItem label="是否单位">
-                    <Select v-model="form.isUnit" :disabled="lockUint">
+                    <Select v-model="form.isUnit" :disabled="lockUpdate">
                         <Option value="0">是</Option>
                         <Option value="1">否</Option>
                     </Select>
                 </FormItem>
                 </Col>
-                <Col span="5" v-show="showDept" offset="1">
+                <Col span="8" v-show="showUnit" offset="1">
                 <FormItem label="上级部门" prop="parentId">
-                    <Cascader :data="buildDept" v-model="form.parentId" placeholder="请选择部门"
-                              change-on-select @on-change="changeDept"></Cascader>
+                    <Cascader :data="buildUnit" v-model="form.parentId" placeholder="请选择部门"
+                              change-on-select @on-change="changeUnit" :disabled="lockUpdate"></Cascader>
                 </FormItem>
                 </Col>
             </Row>
             <Row>
-                <Col span="5">
+                <Col span="8">
                 <FormItem label="编号" prop="cNo">
-                    <span v-show="showDept">{{form.parentNo}}</span>
-                    <InputNumber :max="99" :min="1" v-show="showDept" v-model="form.cNo" placeholder="输入编号...,且前缀默认添加" :readonly="lockUint">
+                    <span v-show="showNo" class="span_no">{{form.parentNo}}</span>
+                    <span v-show="showNo">-</span>
+                    <InputNumber :max="99" :min="1" v-show="showUnit" v-model="bindNumberNo"
+                                 placeholder="输入编号...,且前缀默认添加"
+                                 :readonly="lockUpdate">
                     </InputNumber>
-                    <InputNumber :max="99" :min="1" v-show="!showDept" v-model="form.cNo" placeholder="输入编号..." :readonly="lockUint">
+                    <InputNumber :max="99" :min="1" v-show="!showUnit" v-model="bindNumberNo" placeholder="输入编号..."
+                                 :readonly="lockUpdate">
                     </InputNumber>
                 </FormItem>
                 </Col>
-                <Col span="5" offset="1">
+                <Col span="8" offset="1">
                 <FormItem label="名称" prop="cName">
                     <Input v-model="form.cName" placeholder="输入名称..."></Input>
                 </FormItem>
@@ -76,7 +80,7 @@
 </template>
 <script>
     export default {
-        name: "dept_e",
+        name: "unit_e",
         data() {
             let oThis = this;
             const validateParent = function (rule, value, callback) {
@@ -89,7 +93,7 @@
                 curId: '-1',
                 btnDis: true,
                 form: {
-                    cNo: 2,
+                    cNo: 1,
                     cName: '',
                     status: '0',
                     isProduct: '0',
@@ -100,7 +104,7 @@
                     remark: ''
                 },
                 title: '编辑',
-                deptList: [],
+                unitList: [],
                 ruleValidate: {
                     cName: [{required: true, message: '请您输入姓名', trigger: 'blur'}],
                     parentId: [{validator: validateParent, trigger: 'change'}],
@@ -111,33 +115,44 @@
             this.curId = this.$route.params.id || '-1';
         },
         computed: {
-            lockUint: function () {
+            lockUpdate: function () {
                 return this.curId !== '-1';
             },
-            showDept: function () {
+            showUnit: function () {
                 return this.form.isUnit === '1';
             },
-            buildDept: function () {
-                return this.$helper.buildDept(this.deptList);
-            }
+            showNo: function () {
+                debugger
+                return this.form.isUnit === '1' && this.form.parentNo
+            },
+            buildUnit: function () {
+                return this.$helper.buildUnit(this.unitList);
+            },
+            bindNumberNo: {
+                set: function (value) {
+                    this.form.cNo = parseInt(value);
+                },
+                get: function () {
+                    return parseInt(this.form.cNo);
+                }
+            },
         },
         methods: {
-            changeDept(value, selectedData) {
+            changeUnit(value, selectedData) {
                 this.form.parentNo = this.$_.last(selectedData).value;
-                debugger;
             },
             handleSubmit() {
                 this.btnDis = true;
-                this.$refs["DeptForm"].validate(async (valid) => {
+                this.$refs["UnitForm"].validate(async (valid) => {
                     if (valid) {
                         const msg = this.$Message.loading({
                             content: 'Loading...',
                             duration: 0
                         });
                         if (this.curId === '-1') {
-                            this.saveDept();
+                            this.saveUnit();
                         } else {
-                            this.updateDept();
+                            this.updateUnit();
                         }
                         msg();
                     }
@@ -145,29 +160,31 @@
                 })
             },
             handleReset() {
-                this.$router.push('/index/depts');
+                this.$router.push('/index/units');
             },
             async getInfo(id) {
                 const msg = this.$Message.loading({
                     content: 'Loading...',
                     duration: 0
                 });
-                let result = await this.$http.get(`/v1/dept/${id}/edit`);
+                let result = await this.$http.get(`/v1/unit/${id}/edit`);
                 if (result && result.isSuc) {
                     let info = result.data.info;
 
                     this.$_.each(this.form, (v, k) => {
                         if (k === "parentId") {
                             let parentId = info[k];
-                            let tempDept = [];
-                            if (parentId && parentId.length > 3) {
-                                tempDept.push(parentId.substring(0, 1));
-                                tempDept.push(parentId.substring(0, 3));
-                                tempDept.push(parentId);
+                            this.form.parentNo = parentId;
+                            let tempUnit = [];
+                            if (parentId && parentId.length > 2) {
+                                tempUnit.push(parentId.substring(0, 2));
+                                tempUnit.push(parentId);
                             } else {
-                                tempDept.push(parentId);
+                                tempUnit.push(parentId);
                             }
-                            this.form[k] = tempDept;
+                            this.form[k] = tempUnit;
+                        } else if (k === "cNo") {
+                            this.form[k] = info[k] && info[k].toString().substring(0, 2);
                         } else if (info[k]) {
                             this.form[k] = info[k].toString();
                         }
@@ -176,50 +193,46 @@
                     msg();
                 }
             },
-            async saveDept() {
+            async saveUnit() {
                 let form = this.$_.assign({}, this.form);
                 form.parentId = this.$_.last(form.parentId);
-                form.cNo = (form.parentNo || '') + form.cNo;
+                if (form.isUnit == '1') {
+                    form.cNo = (form.parentNo || '') + form.cNo
+                }
                 let result;
-                result = await this.$http.post(`/v1/dept`, form);
+                result = await this.$http.post(`/v1/unit`, form);
                 if (result && result.isSuc) {
                     this.$Message.success(result ? result.data.msg : '网络异常');
-                    this.$router.push('/index/depts');
+                    this.$router.push('/index/units');
                 } else {
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
 
             },
-            async updateDept() {
+            async updateUnit() {
                 let form = this.$_.assign({}, this.form);
                 form.parentId = this.$_.last(form.parentId);
                 let result;
-                result = await this.$http.put(`/v1/dept/${this.curId}`, form);
+                result = await this.$http.put(`/v1/unit/${this.curId}`, form);
                 if (result && result.isSuc) {
                     this.$Message.success(result ? result.data.msg : '网络异常');
-                    this.$router.push('/index/depts');
+                    this.$router.push('/index/units');
                 } else {
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
             },
-            async getDept() {
+            async getUnit() {
                 let result;
-                result = await this.$http.get(`/v1/dept`, {isPage: false});
+                result = await this.$http.get(`/v1/unit`, {isPage: false});
                 if (result && result.isSuc) {
-                    this.deptList = result.data.deptList;
-                    //获取最后的单位
-                    if(this.curId === '-1'){
-                        let parents = this.$_.filter(this.deptList,{parentId:'0'});
-                        debugger
-                        this.form.cNo = this.$_.maxBy(parents,'cNo').cNo;
-                    }
+                    this.unitList = result.data.unitList;
                 } else {
                     this.$Message.error(result ? result.data.msg : '网络异常');
                 }
             },
         },
         mounted: async function () {
-            await this.getDept();
+            await this.getUnit();
             if (this.curId !== '-1') {
                 this.getInfo(this.curId);
             }
@@ -229,5 +242,11 @@
 </script>
 
 <style scoped>
-
+    .span_no {
+        border: #cacfda 1px solid;
+        background: #cacfda;
+        padding: 7px;
+        border-radius: 3px;
+        border: #6d7380 1px solid;
+    }
 </style>

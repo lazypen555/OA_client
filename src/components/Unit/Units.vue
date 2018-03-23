@@ -39,11 +39,11 @@
 </template>
 <script>
     export default {
-        name: "depts",
+        name: "units",
         data() {
             return {
                 name: '',
-                cDept: ['-1'],
+                cUnit: ['-1'],
                 status: '-1',
                 searchDis: true,
                 columns: [
@@ -141,19 +141,18 @@
                 tableLoading: false
             }
         },
-        computed:{
-            tableData:function () {
-                return this.$_.map(this.data,(v,i)=>{
-                    let {parentId,isProduct,isOut}=v;
+        computed: {
+            tableData: function () {
+                return this.$_.map(this.data, (v, i) => {
+                    let {parentId, isProduct, isOut} = v;
 
-                    let {cNo='',cName='' }= this.$_.find(this.data,{cNo:parentId}) || {};
-                    debugger
-                    if(cNo){
-                        v.parentNo=cNo;
-                        v.parentName=cName;
+                    let {cNo = '', cName = ''} = this.$_.find(this.data, {cNo: parentId}) || {};
+                    if (cNo) {
+                        v.parentNo = cNo;
+                        v.parentName = cName;
                     }
-                    v.isProduct = isProduct=="0" ? '是':'否';
-                    v.isOut = isOut=="0"  ? '是':'否';
+                    v.isProduct = isProduct == "0" ? '是' : '否';
+                    v.isOut = isOut == "0" ? '是' : '否';
                     return v;
                 });
             }
@@ -161,18 +160,18 @@
         methods: {
             indexChange(index) {
                 this.index = index;
-                this.getInfo(this.index, this.page);
+                this.getUnit(this.index, this.page);
             },
             sizeChange(size) {
                 this.index = 1;
                 this.page = size;
-                this.getInfo(this.index, this.page);
+                this.getUnit(this.index, this.page);
             },
             showEdit(id) {
-                this.$router.push({path: `/index/depts/${id ? id : -1 }`});
+                this.$router.push({path: `/index/units/${id ? id : -1 }`});
             },
             order(column) {
-                this.getInfo(this.index, this.page, [[column.key, column.order.toUpperCase()]]);
+                this.getUnit(this.index, this.page, [[column.key, column.order.toUpperCase()]]);
             },
             disabledBtn(isLock) {
                 isLock = !!isLock;
@@ -180,7 +179,7 @@
                 this.tableLoading = isLock;
             },
             search() {
-                this.getDept();
+                this.getUnit();
             },
             exportData() {
                 this.$refs.selection.exportCsv({
@@ -190,17 +189,14 @@
                 });
 
             },
-            async getDept(index = 1, page = 20, order) {
+            async getUnit(index = 1, page = 20, order) {
                 this.disabledBtn(true);
-                let {name, cDept, nState} = this;
-                let where = this.$helper.getSendWhere({name, cDept, nState});
-                let result = await this.$http.get(`/v1/dept`, {where, index, page, order});
+                let {name, status} = this;
+                let where = this.$helper.getSendWhere({name, status});
+                let result = await this.$http.get(`/v1/unit`, {where, index, page, order});
                 if (result && result.isSuc) {
-
-                    this.data = result.data.deptList;
+                    this.data = result.data.unitList;
                     this.total = result.data.total;
-                    debugger
-
                 }
                 this.disabledBtn(false);
             },
@@ -208,13 +204,12 @@
                 this.$Modal.confirm({
                     content: '您是否要删除该行?',
                     onOk: async () => {
-                        let result = await  this.$http.delete(`/v1/dept/${id}`);
-                        debugger;
+                        let result = await  this.$http.delete(`/v1/unit/${id}`);
                         if (result && result.isSuc) {
                             this.$Message.success('删除成功');
-                            this.getInfo(this.index, this.page);
+                            this.getUnit(this.index, this.page);
                         } else {
-                            this.$Message.success('删除失败');
+                            this.$Message.success(result ? result.data.msg : '删除失败');
                         }
                     }
                 })
@@ -222,8 +217,7 @@
             }
         },
         mounted: async function () {
-            //await this.getDept();
-            await this.getDept(this.index, this.page);
+            await this.getUnit(this.index, this.page);
         }
     }
 </script>

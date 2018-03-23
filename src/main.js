@@ -51,10 +51,14 @@ router.beforeEach((to, from, next) => {
     next();
 });
 
-router.afterEach(() => {
+router.afterEach((to,form) => {
     iView.LoadingBar.finish();
     window.scrollTo(0, 0);
     //显示breadcrumb
+    //显示标签页
+    if(to.meta.title) {
+        document.title = to.meta.title;
+    }
 });
 
 

@@ -1,6 +1,7 @@
 import _ from 'lodash';
-import ajax from './lib/ajax'
 import helper from './lib/helper'
+import ajax from './lib/ajax'
+
 
 
 let util = {
@@ -11,9 +12,8 @@ util.title = function(title) {
     window.document.title = title;
 };
 
-util.ajax = new ajax();
 util.helper = new helper();
-
 util._=_;
+util.ajax = new ajax();
 
 export default util;
