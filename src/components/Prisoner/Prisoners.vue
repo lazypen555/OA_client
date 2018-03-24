@@ -35,7 +35,7 @@
         </div>
         <div style="margin: 10px;overflow: hidden">
             <div style="float: right;">
-                <Page :total="total" placement="top" show-sizer show-total @on-change="indexChange"
+                <Page :total="total" placement="top" show-sizer show-total @on-change="indexChange" :page-size-opt="[20,50,100]"
                       @on-page-size-change="sizeChange"
                       :page-size="20"></Page>
             </div>

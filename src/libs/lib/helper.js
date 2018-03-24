@@ -61,7 +61,7 @@ class Helper {
 
             if (childrens && childrens.length) {
                 _.each(childrens, (v, i) => {
-                    let child_vNode = {title: v.menuName, value: v.menuId, children: [], expand: true, url: v.menuUrl,index:`${vNode.index}-${i+1}` };
+                    let child_vNode = {title: v.menuName, value: v.menuId, children: [], expand: true, url: v.menuUrl,index:`${vNode.index}-${i+2}` };
                     vNode.children.push(child_vNode);
                     createMenu(v.menuId, child_vNode);
                 });
@@ -76,7 +76,7 @@ class Helper {
             oneList = _.orderBy(oneList, ['menuNo']);
 
             _.each(oneList, (v, i) => {
-                let vNode = {title: v.menuName, value: v.menuId, children: [], expand: true, icon: v.icon,index:(i+1)};
+                let vNode = {title: v.menuName, value: v.menuId, children: [], expand: true, icon: v.icon,index:(i+2)};
                 menu.push(createMenu(v.menuId, vNode))
             });
         }

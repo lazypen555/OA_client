@@ -1,6 +1,6 @@
 import Util from '../../libs/util';
 
-const {_, ajax: _http, helper: _helper} = Util;
+const {_, ajax: _http, helper: _helper,moment:_moment} = Util;
 
 const state = {
     token: {},
@@ -22,11 +22,14 @@ const actions = {
     async registerToken({commit}, token) {
         let result;
         let {username} = token;
+
         result = await _http.get(`/v1/user/${username}`);
         if (result && result.isSuc) {
             delete token.username;
             let {cUser_Id, cUser_Name} = result.data.user;
             token.user = {cUser_Id, cUser_Name};
+
+            token.expires = _moment().add(1,'hours').toDate().getTime();
             commit('registerToken', token);
         } else {
             console.log(result ? result.data.msg : '网络异常');

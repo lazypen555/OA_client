@@ -1,4 +1,5 @@
 import Index from '../components/Index'
+import IndexContent from '../components/Index/Index'
 import Users from '../components/User/Users'
 import User_e from '../components/User/User_e'
 import Roles from '../components/Role/Roles'
@@ -21,7 +22,8 @@ const routers = [
         name: 'index',
         component: Index,
         meta:{
-            title:'首页'
+            title:'首页',
+            requiresAuth: true,
         }
     },
     {
@@ -41,6 +43,14 @@ const routers = [
             title:'首页'
         },
         children:[
+            {
+                path: 'content',
+                component: IndexContent,
+                meta: {
+                    requiresAuth: true,
+                    title:'首页'
+                }
+            },
             {
                 path: 'users',
                 component: Users,

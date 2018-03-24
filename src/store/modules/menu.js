@@ -36,8 +36,12 @@ const getters = {
             }
         });
 
+        //todo 是否添加首页
+        // if(_.find(authsList, {menuId: 16})){
+        //     menus.push(_.find(menusList, {menuId:16}));
+        // }
+        //防止溢出
         cildrenList = undefined;
-
         return menus;
     },
     getIndex: (state) => {

@@ -140,7 +140,7 @@
             </Card>
             <br/>
             <Card>
-                <p slot="title">离监设置</p>
+                <p slot="title">离开设置</p>
                 <Row>
                     <Col span="6">
                     <FormItem label="单位/部门" prop="cUnit">
@@ -149,7 +149,7 @@
                     </FormItem>
                     </Col>
                     <Col span="1">
-                    <FormItem label="是否离监所">
+                    <FormItem label="是否离开">
                         <Checkbox v-model="formItem.bIsOut" size="small"></Checkbox>
                     </FormItem>
                     </Col>
@@ -162,7 +162,7 @@
                     </FormItem>
                     </Col>
                     <Col span="6" offset="1">
-                    <FormItem label="离监所日期" prop="dOutDate">
+                    <FormItem label="离开日期" prop="dOutDate">
                         <DatePicker type="date" v-model="formItem.dOutDate" placement="top" size="small"></DatePicker>
                     </FormItem>
                     </Col>
